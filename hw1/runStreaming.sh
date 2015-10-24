@@ -7,4 +7,6 @@ hadoop jar /usr/lib/hadoop-mapreduce/hadoop-streaming.jar \
     -mapper 'mapper.py 1 4' \
     -reducer reducer.py \
     -input /data/patents/apat63_99.txt \
-    -output hw1_python
+    -output hw1_python && \
+
+hadoop fs -text ./hw1_python/part-00000 | head

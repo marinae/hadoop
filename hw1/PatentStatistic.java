@@ -62,18 +62,9 @@ public class PatentStatistic extends Configured implements Tool
             List<Integer> freq = new ArrayList<Integer>(counts.values());
             Collections.sort(freq);
             int n = counts.size();
-            float med;
             int middle = n / 2;
+            int med = freq.get(middle);
             Integer sum = 0;
-
-            if (n % 2 == 0)
-            {
-                med = (freq.get(middle - 1) + freq.get(middle)) / 2.0f;
-            }
-            else
-            {
-                med = freq.get(middle);
-            }
 
             for (Integer i : freq)
             {
