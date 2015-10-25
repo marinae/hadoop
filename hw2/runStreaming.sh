@@ -1,31 +1,30 @@
 #!/bin/sh
 
-hadoop fs -rm -r page_rank_python
-hadoop fs -rm -r page_rank_python_tmp
+INPUT_FILE=hw2_python/helper/part-00000
+WORK_DIR=hw2_python/pagerank
+TEMP_DIR=hw2_python/pagerank_tmp
 
-hadoop fs -mkdir page_rank_python && \
-hadoop fs -cp ./page_rank_python_helper/part-00000 ./page_rank_python/part-00000 && \
+hadoop fs -rm -r ${WORK_DIR}
+hadoop fs -rm -r ${TEMP_DIR}
 
-for i in $(seq 1 20); do
+hadoop fs -mkdir ${WORK_DIR} && \
+hadoop fs -cp ${INPUT_FILE} ${WORK_DIR}/part-00000 && \
 
-    hadoop jar /usr/lib/hadoop-mapreduce/hadoop-streaming.jar \
-        -files mapper_1.py,reducer_1.py \
-        -mapper mapper_1.py \
-        -reducer reducer_1.py \
-        -input ./page_rank_python/part-00000 \
-        -output page_rank_python_tmp
+for i in $(seq 1 30); do
 
-    hadoop fs -rm -r page_rank_python && \
+    echo "******************** Iteration $i ********************"
 
     hadoop jar /usr/lib/hadoop-mapreduce/hadoop-streaming.jar \
-        -files mapper_2.py,reducer_2.py \
-        -mapper mapper_2.py \
-        -reducer reducer_2.py \
-        -input ./page_rank_python_tmp/part-00000 \
-        -output page_rank_python
+        -files mapper.py,reducer.py \
+        -mapper mapper.py \
+        -reducer reducer.py \
+        -input ${WORK_DIR}/part-00000 \
+        -output ${TEMP_DIR} && \
 
-    hadoop fs -text ./page_rank_python/part-00000 | head
+    hadoop fs -rm ${WORK_DIR}/part-00000 && \
+    hadoop fs -mv ${TEMP_DIR}/part-00000 ${WORK_DIR}/part-00000 && \
+    hadoop fs -rm -r ${TEMP_DIR} && \
 
-    hadoop fs -rm -r page_rank_python_tmp
+    hadoop fs -text ${WORK_DIR}/part-00000 | sort -k2,2nr | head
 
 done
