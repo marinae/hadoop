@@ -36,3 +36,4 @@ for line in sys.stdin:
 
     for t in terms:
         print '%s\t%s' % (t.encode('utf-8'), fields[0])
+        
