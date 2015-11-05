@@ -1,3 +1,17 @@
+import math
+import base64
+
+#   bits/number numbers mode
+schemas = [[1,  28, '0000'],
+           [2,  14, '0001'],
+           [3,  9,  '0010'],
+           [4,  7,  '0011'],
+           [5,  5,  '0100'],
+           [7,  4,  '0101'],
+           [9,  3,  '0110'],
+           [14, 2,  '0111'],
+           [28, 1,  '1000']]
+
 def countDiffs(documents):
     result = []
     for i, doc in enumerate(documents):
@@ -16,9 +30,9 @@ def sumDiffs(diffs):
             result.append(d + result[i - 1])
     return result
 
-def smallint2bit(x):
+def smallint2bit(x, length=8):
     bits = str(bin(x))[2:]
-    return '0' * (8 - len(bits)) + bits
+    return '0' * (length - len(bits)) + bits
 
 def int2bits(x):
     bits = []
@@ -29,6 +43,39 @@ def int2bits(x):
         x = x / 128
     bits[0] = '1' + bits[0][1:]
     return ''.join(bits[::-1])
+
+def bitSize(x):
+    return int(math.floor(math.log(x, 2) + 1) if x != 0 else 1)
+
+def getScheme(sizes):
+    N = len(sizes)
+    for s in schemas[:-1]:
+        if N < s[1]:
+            continue
+        flag = True
+        sumSize = 0
+        for i in xrange(s[1]):
+            sumSize += sizes[i]
+            if sumSize > 28 or sizes[i] > s[0]:
+                flag = False
+                break
+        if flag:
+            return s
+    return schemas[-1]
+
+def encodePack(scheme, diffs, length):
+    bits = scheme
+    for d in diffs:
+        bits += smallint2bit(d, length)
+    return bits
+
+def decodePack(scheme, bits):
+    s = schemas[int(scheme, 2)]
+    diffs = []
+    for i in xrange(s[1]):
+        diffs.append(int(bits[:s[0]], 2))
+        bits = bits[s[0]:]
+    return diffs
 
 class BitstreamWriter:
     def __init__(self):
@@ -73,19 +120,9 @@ class Encoder:
             raise ValueError('Invalid mode specified in command line')
 
     def encodeVarByte(self, diffs):
-        bits = ''.join([int2bits(x) for x in diffs])
-        print bits
-        bw = BitstreamWriter()
-        for i in bits:
-            bw.add(int(i))
-        return bw.getbytes()
+        return ''.join([int2bits(x) for x in diffs])
 
-    def decodeVarByte(self, blob):
-        bits = ''
-        br = BitstreamReader(blob)
-        while not br.finished():
-            bits += str(br.get())
-        print bits
+    def decodeVarByte(self, bits):
         diffs = []
         while len(bits) > 0:
             cur = 0
@@ -97,26 +134,44 @@ class Encoder:
             cur += int(byte, 2)
             bits = bits[8:]
             diffs.append(cur)
-        print diffs
         return diffs
 
     def encodeSimple9(self, diffs):
-        return 'blob'
+        sizes = [bitSize(i) for i in diffs]
+        bits = ''
+        while len(diffs) > 0:
+            s = getScheme(sizes)
+            pack = encodePack(s[2], diffs[:s[1]], s[0])
+            bits += pack + '0' * (32 - len(pack))
+            diffs = diffs[s[1]:]
+            sizes = sizes[s[1]:]
+        return bits
 
-    def decodeSimple9(self, blob):
-        return []
+    def decodeSimple9(self, bits):
+        diffs = []
+        while len(bits) > 0:
+            diffs.extend(decodePack(bits[:4], bits[4:32]))
+            bits = bits[32:]
+        return diffs
 
     def encode(self, docs):
         diffs = countDiffs(sorted(docs))
-        print diffs
         if self.mode == 'VarByte':
-            return self.encodeVarByte(diffs)
+            bits = self.encodeVarByte(diffs)
         else:
-            return self.encodeSimple9(diffs)
+            bits = self.encodeSimple9(diffs)
+        bw = BitstreamWriter()
+        for i in bits:
+            bw.add(int(i))
+        return base64.encodestring(bw.getbytes())[:-1]
 
     def decode(self, blob):
+        bits = ''
+        br = BitstreamReader(base64.decodestring(blob))
+        while not br.finished():
+            bits += str(br.get())
         if self.mode == 'VarByte':
-            diffs = self.decodeVarByte(blob)
+            diffs = self.decodeVarByte(bits)
         else:
-            diffs = self.decodeSimple9(blob)
+            diffs = self.decodeSimple9(bits)
         return sumDiffs(diffs)
