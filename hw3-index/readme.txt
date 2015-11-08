@@ -1,15 +1,15 @@
 Usage:
 
+Specify one of encodings in the command line: VarByte or Simple9
+
 1. Run map-reduce on cluster:
-    a) ./runHadoop.sh VarByte
-    b) ./runHadoop.sh Simple9
+    ./runHadoop.sh Simple9
 
 2. Build index on local computer:
-    a) ./runBuildingIndex.sh VarByte
-    b) ./runBuildingIndex.sh Simple9
+    ./runBuildingIndex.sh Simple9
 
 3. Search sites:
-    python query.py
+    ./run.sh Simple9
     >> маринованные AND огурцы AND NOT грибы OR картошка
     >> NOT борщ AND сметана
     >> кровавая OR мэри

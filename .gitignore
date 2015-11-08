@@ -1,4 +1,5 @@
 *.zip
+*.pyc
 part-00000
 data/index
 data/offsets.txt
