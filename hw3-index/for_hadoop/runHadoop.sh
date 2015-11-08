@@ -5,7 +5,6 @@ SIZE=all
 MAPPER=mapper.py
 REDUCER=reducer.py
 INPUT=$(hadoop fs -ls /data/sites/${SITE}/all/docs-*.txt | awk '{print $NF}' | tr '\n' ',' | rev | cut -c 2- | rev)
-echo $INPUT
 OUTPUT_DIR=index
 ENCODER=encoder.zip
 BS_DIR=bs4.zip
