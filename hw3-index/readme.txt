@@ -1,9 +1,16 @@
-How to run:
+Usage:
 
-1. On cluster:
-    a) ./run.sh VarByte
-    b) ./run.sh Simple9
+1. Run map-reduce on cluster:
+    a) ./runHadoop.sh VarByte
+    b) ./runHadoop.sh Simple9
 
-2. On local computer:
-    a) python buildDict.py VarByte
-    b) python buildDict.py Simple9
+2. Build index on local computer:
+    a) ./runBuildingIndex.sh VarByte
+    b) ./runBuildingIndex.sh Simple9
+
+3. Search sites:
+    python query.py
+    >> маринованные AND огурцы AND NOT грибы OR картошка
+    >> NOT борщ AND сметана
+    >> кровавая OR мэри
+    >> Ctrl-D
